@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JSON Blog Viewer</title>
+<title>Blog JSON CMS Viewer</title>
 
 <style>
 body{
@@ -12,29 +12,90 @@ body{
   background:#fafafa;
 }
 
-.uploadBox{
-  background:#111;
+/* upload bar */
+.topbar{
+  position:sticky;
+  top:0;
+  background:#0c3e3f;
   color:#fff;
-  padding:20px;
+  padding:14px;
   text-align:center;
+  z-index:999;
 }
 
+.topbar input{
+  margin-top:8px;
+}
+
+.dropZone{
+  margin-top:10px;
+  padding:12px;
+  border:2px dashed #ffffff55;
+  border-radius:8px;
+  font-size:14px;
+}
+
+.dropZone.drag{
+  background:#ffffff22;
+}
+
+.error{
+  color:#ffb4b4;
+  margin-top:8px;
+  font-size:14px;
+}
+
+/* layout */
 .wrapper{padding:40px 20px;}
 .article{max-width:900px;margin:auto;}
 
-.title{font-size:2.2rem;font-weight:700;margin-bottom:10px;}
-.lead{font-size:1.1rem;color:#555;margin-bottom:25px;}
+.title{
+  font-size:2.2rem;
+  font-weight:700;
+  margin-bottom:10px;
+}
 
-.heroImage{width:100%;border-radius:12px;}
+.lead{
+  font-size:1.1rem;
+  color:#555;
+  margin-bottom:25px;
+  line-height:1.6;
+}
+
+.heroImage{
+  width:100%;
+  border-radius:12px;
+}
+
 .heroFigure{margin-bottom:30px;}
 
-.blockHeading2{font-size:1.5rem;margin:30px 0 10px;font-weight:700;}
-.blockText{line-height:1.7;margin-bottom:16px;color:#333;}
+.blockHeading2{
+  font-size:1.5rem;
+  margin:35px 0 10px;
+  font-weight:700;
+}
 
-.blockImage img{width:100%;border-radius:12px;}
-.blockImageCaption{font-size:.9rem;color:#777;margin-top:6px;}
+.blockText{
+  line-height:1.7;
+  margin-bottom:16px;
+  color:#333;
+}
 
-.blockList{padding-left:20px;margin-bottom:20px;}
+.blockImage img{
+  width:100%;
+  border-radius:12px;
+}
+
+.blockImageCaption{
+  font-size:.9rem;
+  color:#777;
+  margin-top:6px;
+}
+
+.blockList{
+  padding-left:20px;
+  margin-bottom:20px;
+}
 
 .blockCallout{
   background:#f0f4f4;
@@ -44,24 +105,71 @@ body{
   margin:20px 0;
 }
 
-.blockFaq{border:1px solid #eee;margin-bottom:10px;background:#fff;}
+.blockCalloutTitle{
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+/* faq */
+.blockFaq{
+  border:1px solid #eee;
+  margin-bottom:10px;
+  background:#fff;
+}
+
 .blockFaqTrigger{
-  width:100%;padding:16px;border:none;background:#fff;
-  font-weight:600;text-align:left;cursor:pointer;
+  width:100%;
+  padding:16px;
+  border:none;
+  background:#fff;
+  font-weight:600;
+  text-align:left;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
 }
+
 .blockFaqAnswerWrapper{
-  max-height:0;overflow:hidden;transition:.3s;
+  max-height:0;
+  overflow:hidden;
+  transition:.3s;
 }
-.blockFaqOpen .blockFaqAnswerWrapper{max-height:200px;}
-.blockFaqAnswer{padding:0 16px 16px;color:#555;}
+
+.blockFaqOpen .blockFaqAnswerWrapper{
+  max-height:300px;
+}
+
+.blockFaqAnswer{
+  padding:0 16px 16px;
+  color:#555;
+}
+
+.resetBtn{
+  margin-left:10px;
+  background:#fff;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
 </style>
 </head>
 
 <body>
 
-<div class="uploadBox">
-  <h2>Upload Blog JSON</h2>
-  <input type="file" id="fileInput" accept=".json"/>
+<div class="topbar">
+  <b>Upload Blog JSON</b>
+  <button class="resetBtn" onclick="resetPage()">Reset</button>
+
+  <div>
+    <input type="file" id="fileInput" accept=".json">
+  </div>
+
+  <div id="dropZone" class="dropZone">
+    Drag & Drop JSON here
+  </div>
+
+  <div id="error" class="error"></div>
 </div>
 
 <div class="wrapper">
@@ -71,7 +179,7 @@ body{
     <p id="desc" class="lead"></p>
 
     <figure id="heroWrap" class="heroFigure" style="display:none;">
-      <img id="hero" class="heroImage"/>
+      <img id="hero" class="heroImage">
     </figure>
 
     <div id="content"></div>
@@ -80,21 +188,74 @@ body{
 </div>
 
 <script>
-document.getElementById("fileInput").addEventListener("change", function(e){
-  const file = e.target.files[0];
-  if(!file) return;
+const fileInput=document.getElementById("fileInput");
+const dropZone=document.getElementById("dropZone");
+const errorBox=document.getElementById("error");
 
-  const reader = new FileReader();
-  reader.onload = function(event){
-    const json = JSON.parse(event.target.result);
-    renderBlog(json);
-  };
-  reader.readAsText(file);
+fileInput.addEventListener("change",handleFile);
+
+dropZone.addEventListener("dragover",(e)=>{
+  e.preventDefault();
+  dropZone.classList.add("drag");
 });
 
+dropZone.addEventListener("dragleave",()=>{
+  dropZone.classList.remove("drag");
+});
+
+dropZone.addEventListener("drop",(e)=>{
+  e.preventDefault();
+  dropZone.classList.remove("drag");
+  const file=e.dataTransfer.files[0];
+  if(file) readFile(file);
+});
+
+function handleFile(e){
+  const file=e.target.files[0];
+  if(file) readFile(file);
+}
+
+function readFile(file){
+  errorBox.textContent="";
+
+  if(!file.name.endsWith(".json")){
+    showError("Upload JSON file only");
+    return;
+  }
+
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const json=JSON.parse(ev.target.result);
+      validateJson(json);
+      renderBlog(json);
+    }catch(err){
+      showError("Invalid JSON format");
+    }
+  };
+  reader.readAsText(file);
+}
+
+function validateJson(data){
+  if(!data.meta) throw "Missing meta";
+  if(!data.blocks) throw "Missing blocks";
+}
+
+function showError(msg){
+  errorBox.textContent=msg;
+}
+
+function resetPage(){
+  document.getElementById("content").innerHTML="";
+  document.getElementById("title").textContent="";
+  document.getElementById("desc").textContent="";
+  document.getElementById("heroWrap").style.display="none";
+  errorBox.textContent="";
+}
+
 function renderBlog(data){
-  document.getElementById("title").textContent = data.meta?.title || "";
-  document.getElementById("desc").textContent = data.meta?.description || "";
+  document.getElementById("title").textContent=data.meta?.title||"";
+  document.getElementById("desc").textContent=data.meta?.description||"";
 
   if(data.heroImage){
     document.getElementById("heroWrap").style.display="block";
@@ -104,7 +265,7 @@ function renderBlog(data){
   const container=document.getElementById("content");
   container.innerHTML="";
 
-  const blocks=[...data.blocks].sort((a,b)=>a.order-b.order);
+  const blocks=[...(data.blocks||[])].sort((a,b)=>a.order-b.order);
 
   blocks.forEach(block=>{
     let el;
@@ -112,9 +273,10 @@ function renderBlog(data){
     switch(block.type){
 
       case "heading":
-        el=document.createElement("h2");
-        el.className="blockHeading2";
-        el.textContent=block.data.text;
+        const tag=document.createElement(block.level||"h2");
+        tag.className="blockHeading2";
+        tag.textContent=block.data.text;
+        el=tag;
         break;
 
       case "text":
@@ -147,7 +309,7 @@ function renderBlog(data){
         el=document.createElement("div");
         el.className="blockCallout";
         el.innerHTML=`
-          ${block.data.title?`<b>${block.data.title}</b><br>`:""}
+          ${block.data.title?`<div class="blockCalloutTitle">${block.data.title}</div>`:""}
           ${block.data.text}
         `;
         break;
@@ -156,7 +318,10 @@ function renderBlog(data){
         el=document.createElement("div");
         el.className="blockFaq";
         el.innerHTML=`
-          <button class="blockFaqTrigger">${block.data.question}</button>
+          <button class="blockFaqTrigger">
+            ${block.data.question}
+            <span>⌄</span>
+          </button>
           <div class="blockFaqAnswerWrapper">
             <p class="blockFaqAnswer">${block.data.answer}</p>
           </div>
