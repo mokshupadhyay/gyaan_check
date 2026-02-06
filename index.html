@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON Blog Viewer</title>
+
+<style>
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#fafafa;
+}
+
+.uploadBox{
+  background:#111;
+  color:#fff;
+  padding:20px;
+  text-align:center;
+}
+
+.wrapper{padding:40px 20px;}
+.article{max-width:900px;margin:auto;}
+
+.title{font-size:2.2rem;font-weight:700;margin-bottom:10px;}
+.lead{font-size:1.1rem;color:#555;margin-bottom:25px;}
+
+.heroImage{width:100%;border-radius:12px;}
+.heroFigure{margin-bottom:30px;}
+
+.blockHeading2{font-size:1.5rem;margin:30px 0 10px;font-weight:700;}
+.blockText{line-height:1.7;margin-bottom:16px;color:#333;}
+
+.blockImage img{width:100%;border-radius:12px;}
+.blockImageCaption{font-size:.9rem;color:#777;margin-top:6px;}
+
+.blockList{padding-left:20px;margin-bottom:20px;}
+
+.blockCallout{
+  background:#f0f4f4;
+  border-left:4px solid #0c3e3f;
+  padding:16px;
+  border-radius:6px;
+  margin:20px 0;
+}
+
+.blockFaq{border:1px solid #eee;margin-bottom:10px;background:#fff;}
+.blockFaqTrigger{
+  width:100%;padding:16px;border:none;background:#fff;
+  font-weight:600;text-align:left;cursor:pointer;
+}
+.blockFaqAnswerWrapper{
+  max-height:0;overflow:hidden;transition:.3s;
+}
+.blockFaqOpen .blockFaqAnswerWrapper{max-height:200px;}
+.blockFaqAnswer{padding:0 16px 16px;color:#555;}
+</style>
+</head>
+
+<body>
+
+<div class="uploadBox">
+  <h2>Upload Blog JSON</h2>
+  <input type="file" id="fileInput" accept=".json"/>
+</div>
+
+<div class="wrapper">
+  <article class="article">
+
+    <h1 id="title" class="title"></h1>
+    <p id="desc" class="lead"></p>
+
+    <figure id="heroWrap" class="heroFigure" style="display:none;">
+      <img id="hero" class="heroImage"/>
+    </figure>
+
+    <div id="content"></div>
+
+  </article>
+</div>
+
+<script>
+document.getElementById("fileInput").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(event){
+    const json = JSON.parse(event.target.result);
+    renderBlog(json);
+  };
+  reader.readAsText(file);
+});
+
+function renderBlog(data){
+  document.getElementById("title").textContent = data.meta?.title || "";
+  document.getElementById("desc").textContent = data.meta?.description || "";
+
+  if(data.heroImage){
+    document.getElementById("heroWrap").style.display="block";
+    document.getElementById("hero").src=data.heroImage;
+  }
+
+  const container=document.getElementById("content");
+  container.innerHTML="";
+
+  const blocks=[...data.blocks].sort((a,b)=>a.order-b.order);
+
+  blocks.forEach(block=>{
+    let el;
+
+    switch(block.type){
+
+      case "heading":
+        el=document.createElement("h2");
+        el.className="blockHeading2";
+        el.textContent=block.data.text;
+        break;
+
+      case "text":
+        el=document.createElement("p");
+        el.className="blockText";
+        el.textContent=block.data.text;
+        break;
+
+      case "image":
+        el=document.createElement("figure");
+        el.className="blockImage";
+        el.innerHTML=`
+          <img src="${block.data.url}">
+          ${block.data.caption?`<figcaption class="blockImageCaption">${block.data.caption}</figcaption>`:""}
+        `;
+        break;
+
+      case "list":
+        const list=document.createElement(block.style==="numbered"?"ol":"ul");
+        list.className="blockList";
+        block.data.items.forEach(i=>{
+          const li=document.createElement("li");
+          li.textContent=i;
+          list.appendChild(li);
+        });
+        el=list;
+        break;
+
+      case "callout":
+        el=document.createElement("div");
+        el.className="blockCallout";
+        el.innerHTML=`
+          ${block.data.title?`<b>${block.data.title}</b><br>`:""}
+          ${block.data.text}
+        `;
+        break;
+
+      case "faq":
+        el=document.createElement("div");
+        el.className="blockFaq";
+        el.innerHTML=`
+          <button class="blockFaqTrigger">${block.data.question}</button>
+          <div class="blockFaqAnswerWrapper">
+            <p class="blockFaqAnswer">${block.data.answer}</p>
+          </div>
+        `;
+        el.querySelector("button").onclick=()=>el.classList.toggle("blockFaqOpen");
+        break;
+    }
+
+    if(el) container.appendChild(el);
+  });
+}
+</script>
+
+</body>
+</html>
