@@ -6,334 +6,597 @@
 <title>Blog JSON CMS Viewer</title>
 
 <style>
-body{
-  margin:0;
-  font-family:system-ui;
-  background:#fafafa;
+:root {
+  --primary: #0c3e3f;
+  --primary-light: #165b5d;
+  --bg: #fafafa;
+  --text: #333;
+  --text-light: #555;
+  --border: #ddd;
+  --white: #fff;
+  --radius: 8px;
+  --shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* upload bar */
-.topbar{
-  position:sticky;
-  top:0;
-  background:#0c3e3f;
-  color:#fff;
-  padding:14px;
-  text-align:center;
-  z-index:999;
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
 }
 
-.topbar input{
-  margin-top:8px;
+/* UI Components */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  transition: all 0.2s;
 }
 
-.dropZone{
-  margin-top:10px;
-  padding:12px;
-  border:2px dashed #ffffff55;
-  border-radius:8px;
-  font-size:14px;
+.btn-primary {
+  background: var(--primary);
+  color: var(--white);
+  padding: 10px 20px;
+}
+.btn-primary:hover { background: var(--primary-light); }
+
+.btn-secondary {
+  background: white;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  padding: 8px 16px;
+}
+.btn-secondary:hover { background: #f0f8f8; }
+
+.btn-text {
+  background: transparent;
+  color: #666;
+  padding: 6px 10px;
+}
+.btn-text:hover { color: var(--primary); background: #eee; }
+
+/* Topbar */
+.topbar {
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 15px 20px;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.dropZone.drag{
-  background:#ffffff22;
+.topbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.error{
-  color:#ffb4b4;
-  margin-top:8px;
-  font-size:14px;
+.brand {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
 }
 
-/* layout */
-.wrapper{padding:40px 20px;}
-.article{max-width:900px;margin:auto;}
-
-.title{
-  font-size:2.2rem;
-  font-weight:700;
-  margin-bottom:10px;
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
-.lead{
-  font-size:1.1rem;
-  color:#555;
-  margin-bottom:25px;
-  line-height:1.6;
+/* Json Input Area */
+.input-section {
+  display: flex;
+  gap: 15px;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: var(--radius);
+  border: 1px dashed var(--border);
 }
 
-.heroImage{
-  width:100%;
-  border-radius:12px;
+.json-input-wrapper {
+  flex: 1;
+  position: relative;
 }
 
-.heroFigure{margin-bottom:30px;}
-
-.blockHeading2{
-  font-size:1.5rem;
-  margin:35px 0 10px;
-  font-weight:700;
+.json-textarea {
+  width: 100%;
+  height: 80px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: monospace;
+  font-size: 0.9rem;
+  resize: vertical;
+  box-sizing: border-box;
 }
 
-.blockText{
-  line-height:1.7;
-  margin-bottom:16px;
-  color:#333;
+.file-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  border: 2px dashed #ccc;
+  border-radius: var(--radius);
+  color: #777;
+  cursor: pointer;
+  min-width: 200px;
+  text-align: center;
+  transition: 0.2s;
+}
+.file-input-wrapper:hover, .file-input-wrapper.drag {
+  border-color: var(--primary);
+  background: #eefefe;
+  color: var(--primary);
 }
 
-.blockImage img{
-  width:100%;
-  border-radius:12px;
+.file-input-hidden {
+  display: none;
 }
 
-.blockImageCaption{
-  font-size:.9rem;
-  color:#777;
-  margin-top:6px;
+/* Language Toggle */
+.lang-toggle {
+  display: flex;
+  background: #eee;
+  padding: 4px;
+  border-radius: 20px;
+  gap: 0;
 }
 
-.blockList{
-  padding-left:20px;
-  margin-bottom:20px;
+.lang-opt {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #777;
+  transition: 0.3s;
 }
 
-.blockCallout{
-  background:#f0f4f4;
-  border-left:4px solid #0c3e3f;
-  padding:16px;
-  border-radius:6px;
-  margin:20px 0;
+.lang-opt.active {
+  background: var(--white);
+  color: var(--primary);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.blockCalloutTitle{
-  font-weight:700;
-  margin-bottom:6px;
+/* Content Layout */
+.wrapper { padding: 40px 20px; max-width: 900px; margin: auto; }
+
+.article { 
+  background: var(--white);
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  min-height: 200px;
 }
 
-/* faq */
-.blockFaq{
-  border:1px solid #eee;
-  margin-bottom:10px;
-  background:#fff;
+.empty-state {
+  text-align: center;
+  color: #999;
+  padding: 60px 0;
+  font-style: italic;
 }
 
-.blockFaqTrigger{
-  width:100%;
-  padding:16px;
-  border:none;
-  background:#fff;
-  font-weight:600;
-  text-align:left;
-  cursor:pointer;
-  display:flex;
-  justify-content:space-between;
-}
+.title { font-size: 2.5rem; font-weight: 800; margin-bottom: 15px; letter-spacing: -0.02em; line-height: 1.2; }
+.lead { font-size: 1.25rem; color: var(--text-light); margin-bottom: 30px; line-height: 1.6; }
 
-.blockFaqAnswerWrapper{
-  max-height:0;
-  overflow:hidden;
-  transition:.3s;
-}
+.hero-figure { margin: 0 0 40px 0; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+.hero-image { width: 100%; display: block; object-fit: cover; }
 
-.blockFaqOpen .blockFaqAnswerWrapper{
-  max-height:300px;
-}
+/* Blocks */
+.block-heading { font-size: 1.8rem; margin: 40px 0 15px; font-weight: 700; color: var(--primary); }
+.block-text { font-size: 1.05rem; margin-bottom: 20px; color: #444; line-height: 1.8; }
+.block-list { padding-left: 25px; margin-bottom: 25px; }
+.block-list li { margin-bottom: 8px; padding-left: 5px; }
 
-.blockFaqAnswer{
-  padding:0 16px 16px;
-  color:#555;
-}
+.block-image { margin: 30px 0; border-radius: 12px; overflow: hidden; }
+.block-image img { width: 100%; display: block; }
+.block-caption { font-size: 0.9rem; color: #777; margin-top: 8px; text-align: center; font-style: italic; }
 
-.resetBtn{
-  margin-left:10px;
-  background:#fff;
-  border:none;
-  padding:6px 10px;
-  border-radius:6px;
-  cursor:pointer;
+.block-callout {
+  background: #f0f8f8;
+  border-left: 5px solid var(--primary);
+  padding: 20px 25px;
+  border-radius: 4px;
+  margin: 30px 0;
 }
+.block-callout-title { font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+
+.block-faq {
+  border: 1px solid var(--border);
+  margin-bottom: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.block-faq-trigger {
+  width: 100%;
+  padding: 18px 20px;
+  background: #fff;
+  font-weight: 600;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.block-faq-answer-wrapper {
+  max-height: 0;
+  overflow: hidden;
+  transition: 0.3s ease-out;
+  background: #fdfdfd;
+}
+.block-faq.open .block-faq-answer-wrapper { max-height: 500px; border-top: 1px solid #eee; }
+.block-faq-answer { padding: 20px; margin: 0; color: var(--text-light); }
+
+.error-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #ef4444;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transform: translateY(100px);
+  transition: 0.3s;
+  z-index: 10000;
+}
+.error-toast.visible { transform: translateY(0); }
+
 </style>
 </head>
 
 <body>
 
 <div class="topbar">
-  <b>Upload Blog JSON</b>
-  <button class="resetBtn" onclick="resetPage()">Reset</button>
-
-  <div>
-    <input type="file" id="fileInput" accept=".json">
+  <div class="topbar-header">
+    <div class="brand">Blog CMS Viewer</div>
+    <div class="controls">
+      <!-- Language Toggle -->
+      <div class="lang-toggle" id="langToggle">
+        <div class="lang-opt active" data-lang="en">English</div>
+        <div class="lang-opt" data-lang="hi">Hindi</div>
+      </div>
+      <button class="btn-text" onclick="resetPage()">Reset</button>
+    </div>
   </div>
 
-  <div id="dropZone" class="dropZone">
-    Drag & Drop JSON here
-  </div>
+  <div class="input-section">
+    <!-- JSON Text Input -->
+    <div class="json-input-wrapper">
+      <textarea id="jsonInput" class="json-textarea" placeholder="Paste JSON here..."></textarea>
+    </div>
+    <button class="btn-primary" onclick="loadFromText()">Render JSON</button>
 
-  <div id="error" class="error"></div>
+    <!-- Or Upload -->
+    <div class="file-input-wrapper" id="dropZone">
+      <input type="file" id="fileInput" class="file-input-hidden" accept=".json">
+      <span>Drag & Drop JSON file<br>or Click to Upload</span>
+    </div>
+  </div>
 </div>
 
 <div class="wrapper">
-  <article class="article">
-
-    <h1 id="title" class="title"></h1>
-    <p id="desc" class="lead"></p>
-
-    <figure id="heroWrap" class="heroFigure" style="display:none;">
-      <img id="hero" class="heroImage">
-    </figure>
-
-    <div id="content"></div>
-
+  <article class="article" id="articleContainer">
+    <div class="empty-state">
+      No content loaded. Upload a file or paste JSON above.
+    </div>
   </article>
 </div>
 
+<div id="errorToast" class="error-toast"></div>
+
+<!-- Template for Content -->
+<template id="articleTemplate">
+  <h1 id="title" class="title"></h1>
+  <p id="desc" class="lead"></p>
+  <figure id="heroWrap" class="hero-figure" style="display:none;">
+    <img id="hero" class="hero-image">
+  </figure>
+  <div id="content"></div>
+</template>
+
 <script>
-const fileInput=document.getElementById("fileInput");
-const dropZone=document.getElementById("dropZone");
-const errorBox=document.getElementById("error");
+// State
+let appState = {
+  data: null,
+  lang: 'en'
+};
 
-fileInput.addEventListener("change",handleFile);
+// Elements
+const fileInput = document.getElementById("fileInput");
+const dropZone = document.getElementById("dropZone");
+const jsonInput = document.getElementById("jsonInput");
+const articleContainer = document.getElementById("articleContainer");
+const errorToast = document.getElementById("errorToast");
+const langOpts = document.querySelectorAll(".lang-opt");
 
-dropZone.addEventListener("dragover",(e)=>{
+// Setup Event Listeners
+fileInput.addEventListener("change", handleFile);
+dropZone.addEventListener("click", () => fileInput.click());
+
+dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropZone.classList.add("drag");
 });
-
-dropZone.addEventListener("dragleave",()=>{
-  dropZone.classList.remove("drag");
-});
-
-dropZone.addEventListener("drop",(e)=>{
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag"));
+dropZone.addEventListener("drop", (e) => {
   e.preventDefault();
   dropZone.classList.remove("drag");
-  const file=e.dataTransfer.files[0];
-  if(file) readFile(file);
+  const file = e.dataTransfer.files[0];
+  if (file) readFile(file);
 });
 
-function handleFile(e){
-  const file=e.target.files[0];
-  if(file) readFile(file);
+// Language Toggle Logic
+langOpts.forEach(opt => {
+  opt.addEventListener("click", () => {
+    const lang = opt.dataset.lang;
+    setLanguage(lang);
+  });
+});
+
+function setLanguage(lang) {
+  appState.lang = lang;
+  
+  // Update UI toggle
+  langOpts.forEach(o => o.classList.toggle("active", o.dataset.lang === lang));
+
+  // Rerender if data exists
+  if (appState.data) {
+    renderArticle();
+  }
 }
 
-function readFile(file){
-  errorBox.textContent="";
 
-  if(!file.name.endsWith(".json")){
+function loadFromText() {
+  const text = jsonInput.value.trim();
+  if (!text) {
+    showError("Please paste JSON text first");
+    return;
+  }
+  
+  // Try parsing as JSON first
+  try {
+    const json = JSON.parse(text);
+    loadData(json);
+    return;
+  } catch (e) {
+    // If not valid JSON, try parsing as SQL
+    console.log("Not direct JSON, trying SQL extraction...");
+  }
+
+  // Try extracting from SQL
+  try {
+    const json = extractJsonFromSql(text);
+    if (json) {
+      loadData(json);
+      // Optional: Update value to show just the JSON
+      // jsonInput.value = JSON.stringify(json, null, 2); 
+    } else {
+      showError("Invalid JSON or SQL format");
+    }
+  } catch (e) {
+    showError("Failed to extract JSON from SQL: " + e.message);
+  }
+}
+
+function extractJsonFromSql(text) {
+  // Pattern to find: '{"meta": ...}'::jsonb
+  // We look for a string starting with ' and ending with '::jsonb
+  // The 's' flag (dotAll) is achieved in JS regex via [\s\S] or similar if 's' isn't supported, 
+  // but most modern browsers support it or we can use `[^]*?`.
+  // Let's use a robust pattern looking for the json payload inside the SQL.
+  
+  // Regex explanation:
+  // '         Match opening quote of the SQL string
+  // (         Start capturing group
+  //   \{      Match literal { start of JSON object
+  //   [\s\S]+? Match any character including newlines non-greedy
+  //   \}      Match literal } end of JSON object
+  // )         End capturing group
+  // '::jsonb  Match closing quote and cast
+  
+  const sqlPattern = /'(\s*\{[\s\S]+?\})\s*'::jsonb/i;
+  const match = text.match(sqlPattern);
+
+  if (!match || !match[1]) {
+    throw new Error("Could not find '...':jsonb pattern");
+  }
+
+  let jsonString = match[1];
+
+  // In SQL, single quotes inside strings are escaped by doubling them (' -> '').
+  // We need to unescape them to get valid JSON.
+  jsonString = jsonString.replace(/''/g, "'");
+
+  return JSON.parse(jsonString);
+}
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (file) readFile(file);
+}
+
+function readFile(file) {
+  if (!file.name.endsWith(".json")) {
     showError("Upload JSON file only");
     return;
   }
-
-  const reader=new FileReader();
-  reader.onload=function(ev){
-    try{
-      const json=JSON.parse(ev.target.result);
-      validateJson(json);
-      renderBlog(json);
-    }catch(err){
-      showError("Invalid JSON format");
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const json = JSON.parse(ev.target.result);
+      // Populate text area for easier editing
+      jsonInput.value = JSON.stringify(json, null, 2);
+      loadData(json);
+    } catch (err) {
+      showError("Invalid JSON format in file");
     }
   };
   reader.readAsText(file);
 }
 
-function validateJson(data){
-  if(!data.meta) throw "Missing meta";
-  if(!data.blocks) throw "Missing blocks";
+function loadData(json) {
+  try {
+    validateJson(json);
+    appState.data = json;
+    renderArticle();
+    showError(""); // clear errors
+  } catch (err) {
+    showError(err);
+  }
 }
 
-function showError(msg){
-  errorBox.textContent=msg;
+function validateJson(data) {
+  if (!data || typeof data !== 'object') throw "Invalid JSON structure";
+  if (!data.meta) throw "Missing 'meta' object";
+  if (!data.blocks) throw "Missing 'blocks' array";
 }
 
-function resetPage(){
-  document.getElementById("content").innerHTML="";
-  document.getElementById("title").textContent="";
-  document.getElementById("desc").textContent="";
-  document.getElementById("heroWrap").style.display="none";
-  errorBox.textContent="";
+// Helper to get text based on current language
+function getText(obj) {
+  if (!obj) return "";
+  if (typeof obj === 'string') return obj; // Legacy support
+  return obj[appState.lang] || obj['en'] || ""; // Fallback to English
 }
 
-function renderBlog(data){
-  document.getElementById("title").textContent=data.meta?.title||"";
-  document.getElementById("desc").textContent=data.meta?.description||"";
+function renderArticle() {
+  const data = appState.data;
+  if (!data) return;
 
-  if(data.heroImage){
-    document.getElementById("heroWrap").style.display="block";
-    document.getElementById("hero").src=data.heroImage;
+  // Clone Template
+  const tmpl = document.getElementById("articleTemplate").content.cloneNode(true);
+  
+  // Meta
+  const title = getText(data.meta.title);
+  const desc = getText(data.meta.description);
+  
+  tmpl.getElementById("title").textContent = title;
+  tmpl.getElementById("desc").textContent = desc;
+
+  // Hero Image
+  const heroWrap = tmpl.getElementById("heroWrap");
+  if (data.heroImage) {
+    heroWrap.style.display = "block";
+    tmpl.getElementById("hero").src = data.heroImage;
   }
 
-  const container=document.getElementById("content");
-  container.innerHTML="";
+  // Render Blocks
+  const container = tmpl.getElementById("content");
+  const blocks = [...(data.blocks || [])].sort((a, b) => a.order - b.order);
 
-  const blocks=[...(data.blocks||[])].sort((a,b)=>a.order-b.order);
-
-  blocks.forEach(block=>{
-    let el;
-
-    switch(block.type){
-
-      case "heading":
-        const tag=document.createElement(block.level||"h2");
-        tag.className="blockHeading2";
-        tag.textContent=block.data.text;
-        el=tag;
-        break;
-
-      case "text":
-        el=document.createElement("p");
-        el.className="blockText";
-        el.textContent=block.data.text;
-        break;
-
-      case "image":
-        el=document.createElement("figure");
-        el.className="blockImage";
-        el.innerHTML=`
-          <img src="${block.data.url}">
-          ${block.data.caption?`<figcaption class="blockImageCaption">${block.data.caption}</figcaption>`:""}
-        `;
-        break;
-
-      case "list":
-        const list=document.createElement(block.style==="numbered"?"ol":"ul");
-        list.className="blockList";
-        block.data.items.forEach(i=>{
-          const li=document.createElement("li");
-          li.textContent=i;
-          list.appendChild(li);
-        });
-        el=list;
-        break;
-
-      case "callout":
-        el=document.createElement("div");
-        el.className="blockCallout";
-        el.innerHTML=`
-          ${block.data.title?`<div class="blockCalloutTitle">${block.data.title}</div>`:""}
-          ${block.data.text}
-        `;
-        break;
-
-      case "faq":
-        el=document.createElement("div");
-        el.className="blockFaq";
-        el.innerHTML=`
-          <button class="blockFaqTrigger">
-            ${block.data.question}
-            <span>⌄</span>
-          </button>
-          <div class="blockFaqAnswerWrapper">
-            <p class="blockFaqAnswer">${block.data.answer}</p>
-          </div>
-        `;
-        el.querySelector("button").onclick=()=>el.classList.toggle("blockFaqOpen");
-        break;
-    }
-
-    if(el) container.appendChild(el);
+  blocks.forEach(block => {
+    let el = createBlockElement(block);
+    if (el) container.appendChild(el);
   });
+
+  // Mount
+  articleContainer.innerHTML = "";
+  articleContainer.appendChild(tmpl);
 }
+
+function createBlockElement(block) {
+  let el;
+  switch (block.type) {
+    case "heading":
+      el = document.createElement(block.level || "h2");
+      el.className = "block-heading";
+      el.textContent = getText(block.data.text);
+      break;
+
+    case "text":
+      el = document.createElement("p");
+      el.className = "block-text";
+      el.textContent = getText(block.data.text);
+      break;
+
+    case "image":
+      el = document.createElement("figure");
+      el.className = "block-image";
+      const caption = getText(block.data.caption);
+      el.innerHTML = `
+        <img src="${block.data.url}">
+        ${caption ? `<figcaption class="block-caption">${caption}</figcaption>` : ""}
+      `;
+      break;
+
+    case "list":
+      el = document.createElement(block.style === "numbered" ? "ol" : "ul");
+      el.className = "block-list";
+      const items = block.data.items || [];
+      items.forEach(i => {
+        const li = document.createElement("li");
+        li.textContent = getText(i);
+        el.appendChild(li);
+      });
+      break;
+
+    case "callout":
+      el = document.createElement("div");
+      el.className = "block-callout";
+      const title = getText(block.data.title);
+      const text = getText(block.data.text);
+      el.innerHTML = `
+        ${title ? `<div class="block-callout-title">${title}</div>` : ""}
+        <div>${text}</div>
+      `;
+      break;
+
+    case "faq":
+      el = document.createElement("div");
+      el.className = "block-faq";
+      const q = getText(block.data.question);
+      const a = getText(block.data.answer);
+      el.innerHTML = `
+        <button class="block-faq-trigger">
+          <span>${q}</span>
+          <span style="font-size:1.2em">⌄</span>
+        </button>
+        <div class="block-faq-answer-wrapper">
+          <p class="block-faq-answer">${a}</p>
+        </div>
+      `;
+      el.querySelector("button").onclick = () => el.classList.toggle("open");
+      break;
+  }
+  return el;
+}
+
+function resetPage() {
+  appState.data = null;
+  articleContainer.innerHTML = `
+    <div class="empty-state">
+      No content loaded. Upload a file or paste JSON above.
+    </div>
+  `;
+  jsonInput.value = "";
+  fileInput.value = "";
+  showError("");
+}
+
+function showError(msg) {
+  if (!msg) {
+    errorToast.classList.remove("visible");
+    return;
+  }
+  errorToast.textContent = msg;
+  errorToast.classList.add("visible");
+  setTimeout(() => {
+    errorToast.classList.remove("visible");
+  }, 4000);
+}
+
+// Initial state
+resetPage();
+
 </script>
 
 </body>
 </html>
+
